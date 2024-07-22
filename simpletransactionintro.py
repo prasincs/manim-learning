@@ -2,26 +2,8 @@ from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.azure import AzureService
 
-# class CreateCircle(Scene):
-#     def construct(self):
-#         circle = Circle()  # create a circle
-#         circle.set_fill(PINK, opacity=0.5)  # set the color and transparency
-#         self.play(Create(circle))  # show the circle on screen
 
-# class SquareToCircle(Scene):
-#     def construct(self):
-#         circle = Circle()  # create a circle
-#         circle.set_fill(PINK, opacity=0.5)  # set color and transparency
-
-#         square = Square()  # create a square
-#         square.rotate(PI / 4)  # rotate a certain amount
-
-#         self.play(Create(square))  # animate the creation of the square
-#         self.play(Transform(square, circle))  # interpolate the square into the circle
-#         self.play(FadeOut(square))  # fade out animation
-
-
-class CreateRectangles(VoiceoverScene):
+class IntroduceBitcoinTransactions(VoiceoverScene):
     def construct(self):
         # set the speech synthesizer for the voiceover
         self.set_speech_service(
@@ -78,7 +60,7 @@ class CreateRectangles(VoiceoverScene):
         group.to_edge(LEFT)
 
         with self.voiceover(
-            """This is a source bitcoin transaction with a version, list of inputs, list of outputs, and a locktime."""
+            """This is a source bitcoin transaction with a version, list of inputs, list of outputs, and a locktime. The output from first transaction is used as an input for the second transaction."""
         ):
             # Show the rectangles and text on screen
             self.play(Create(group))
