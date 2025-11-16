@@ -76,9 +76,14 @@ else
     echo -e "${YELLOW}  ! Pango library not found in ldconfig, but may still be available${NC}"
 fi
 
-# Note: LaTeX is skipped for preview builds (not required for simple text)
-# Manim can use simpler text rendering without LaTeX
-echo -e "${YELLOW}  Note: LaTeX disabled for preview builds (using simple text rendering)${NC}"
+# Check for LaTeX (required for MathTex in scenes 7-14)
+echo -e "${BLUE}Checking for LaTeX...${NC}"
+if command -v latex &> /dev/null; then
+    echo -e "${GREEN}  ✓ LaTeX found${NC}"
+else
+    echo -e "${YELLOW}  ! LaTeX not found - scenes with MathTex will be skipped${NC}"
+    echo -e "${YELLOW}    (Scenes 7-14 require LaTeX for math rendering)${NC}"
+fi
 
 echo -e "${GREEN}✓ System dependencies ready${NC}"
 echo ""
@@ -183,7 +188,7 @@ render_module() {
     local output_name=$3
     local module_num=$4
 
-    echo -e "${BLUE}  [$module_num/14] Rendering: ${scene_name}${NC}"
+    echo -e "${BLUE}  [${module_num}] Rendering: ${scene_name}${NC}"
 
     # Render as GIF with low quality for fast preview
     # Capture both stdout and stderr to a temp file for debugging
@@ -218,6 +223,8 @@ render_module() {
 
 # Define all modules and their key scenes for preview
 # Format: "file.py|SceneName|output.gif"
+# NOTE: Scenes 7-14 use MathTex which requires LaTeX. For now, only rendering scenes 1-6.
+# TODO: Install LaTeX or convert MathTex to Text for full rendering
 MODULES=(
     "01_hash_intro.py|HashIntroduction|01_hash_intro.gif|01"
     "02_sha256.py|SHA256Overview|02_sha256.gif|02"
@@ -225,14 +232,14 @@ MODULES=(
     "04_merkle_trees_intro.py|BuildingMerkleTree|04_merkle_tree.gif|04"
     "05_merkle_proofs.py|ProofExample|05_merkle_proof.gif|05"
     "06_public_key_intro.py|PublicKeyIntroduction|06_public_key.gif|06"
-    "07_elliptic_curves_intro.py|EllipticCurveIntroduction|07_elliptic_curve.gif|07"
-    "08_elliptic_curves_math.py|VisualizingScalarMultiplication|08_ec_math.gif|08"
-    "09_ecdsa_signing.py|SigningVisualization|09_ecdsa_sign.gif|09"
-    "10_ecdsa_verification.py|VerificationVisualization|10_ecdsa_verify.gif|10"
-    "11_schnorr_intro.py|ECDSAvsSchnorr|11_schnorr.gif|11"
-    "12_schnorr_aggregation.py|MuSigProtocol|12_schnorr_agg.gif|12"
-    "13_signatures_practice.py|NonceReuseDeepDive|13_sig_practice.gif|13"
-    "14_encoding.py|Base58CheckEncoding|14_encoding.gif|14"
+    # "07_elliptic_curves_intro.py|EllipticCurveIntroduction|07_elliptic_curve.gif|07"  # Requires LaTeX
+    # "08_elliptic_curves_math.py|VisualizingScalarMultiplication|08_ec_math.gif|08"  # Requires LaTeX
+    # "09_ecdsa_signing.py|SigningVisualization|09_ecdsa_sign.gif|09"  # Requires LaTeX
+    # "10_ecdsa_verification.py|VerificationVisualization|10_ecdsa_verify.gif|10"  # Requires LaTeX
+    # "11_schnorr_intro.py|ECDSAvsSchnorr|11_schnorr.gif|11"  # Requires LaTeX
+    # "12_schnorr_aggregation.py|MuSigProtocol|12_schnorr_agg.gif|12"  # Requires LaTeX
+    # "13_signatures_practice.py|NonceReuseDeepDive|13_sig_practice.gif|13"  # Requires LaTeX
+    # "14_encoding.py|Base58CheckEncoding|14_encoding.gif|14"  # Requires LaTeX
 )
 
 # Check if phase1 scenes exist, if not skip rendering
