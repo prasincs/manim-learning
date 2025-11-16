@@ -16,43 +16,111 @@ echo -e "${BLUE}Manim Learning - Netlify Build${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Step 1: Install system dependencies
+# Step 1: Install system dependencies (user space - no root required)
 echo -e "${YELLOW}Step 1/5: Installing system dependencies...${NC}"
 
-# Update package lists
-apt-get update -qq
+# Create local bin directory for user-space binaries
+mkdir -p $HOME/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
 
-# Install LaTeX (required by Manim for text rendering)
-echo -e "${BLUE}Installing LaTeX...${NC}"
-apt-get install -y -qq \
-    texlive \
-    texlive-latex-extra \
-    texlive-fonts-extra \
-    texlive-latex-recommended \
-    texlive-science \
-    texlive-fonts-recommended \
-    cm-super \
-    dvipng
+# Check if FFmpeg is already available (from Netlify's build image)
+echo -e "${BLUE}Checking for FFmpeg...${NC}"
+if command -v ffmpeg &> /dev/null; then
+    echo -e "${GREEN}  ✓ FFmpeg found: $(ffmpeg -version | head -n1)${NC}"
+else
+    echo -e "${YELLOW}  FFmpeg not found, installing from static build...${NC}"
 
-# Install FFmpeg (required for video/GIF generation)
-echo -e "${BLUE}Installing FFmpeg...${NC}"
-apt-get install -y -qq ffmpeg
+    # Download FFmpeg static build (no root required)
+    cd /tmp
+    wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+    tar xf ffmpeg-release-amd64-static.tar.xz
 
-# Install other dependencies
-echo -e "${BLUE}Installing other dependencies...${NC}"
-apt-get install -y -qq \
-    libcairo2-dev \
-    libpango1.0-dev \
-    pkg-config \
-    python3-dev
+    # Copy to local bin
+    find . -name "ffmpeg" -type f -executable -exec cp {} $HOME/.local/bin/ \;
+    find . -name "ffprobe" -type f -executable -exec cp {} $HOME/.local/bin/ \;
 
-echo -e "${GREEN}✓ System dependencies installed${NC}"
+    # Verify installation
+    if command -v ffmpeg &> /dev/null; then
+        echo -e "${GREEN}  ✓ FFmpeg installed successfully${NC}"
+    else
+        echo -e "${RED}  ✗ FFmpeg installation failed${NC}"
+        exit 1
+    fi
+
+    # Clean up
+    cd -
+    rm -rf /tmp/ffmpeg-*
+fi
+
+echo -e "${BLUE}Checking Python...${NC}"
+if command -v python3 &> /dev/null; then
+    echo -e "${GREEN}  ✓ Python found: $(python3 --version)${NC}"
+else
+    echo -e "${RED}  ✗ Python not found${NC}"
+    exit 1
+fi
+
+# Check for Cairo library (required for rendering)
+echo -e "${BLUE}Checking for Cairo library...${NC}"
+if ldconfig -p | grep -q libcairo; then
+    echo -e "${GREEN}  ✓ Cairo library found${NC}"
+else
+    echo -e "${YELLOW}  ! Cairo library not found in ldconfig, but may still be available${NC}"
+fi
+
+# Check for Pango library (required for text rendering)
+echo -e "${BLUE}Checking for Pango library...${NC}"
+if ldconfig -p | grep -q libpango; then
+    echo -e "${GREEN}  ✓ Pango library found${NC}"
+else
+    echo -e "${YELLOW}  ! Pango library not found in ldconfig, but may still be available${NC}"
+fi
+
+# Check for LaTeX (required for MathTex in scenes 7-14)
+echo -e "${BLUE}Checking for LaTeX...${NC}"
+if command -v latex &> /dev/null; then
+    echo -e "${GREEN}  ✓ LaTeX found${NC}"
+else
+    echo -e "${YELLOW}  ! LaTeX not found - scenes with MathTex will be skipped${NC}"
+    echo -e "${YELLOW}    (Scenes 7-14 require LaTeX for math rendering)${NC}"
+fi
+
+echo -e "${GREEN}✓ System dependencies ready${NC}"
 echo ""
 
 # Step 2: Install Python dependencies
 echo -e "${YELLOW}Step 2/5: Installing Python dependencies...${NC}"
-pip install --upgrade pip
-pip install -r requirements.txt
+
+# Upgrade pip first
+pip install --upgrade pip --quiet
+
+# Install dependencies from requirements.txt
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt --quiet
+    echo -e "${GREEN}  ✓ Requirements installed${NC}"
+else
+    echo -e "${RED}  ✗ requirements.txt not found${NC}"
+    exit 1
+fi
+
+# Verify Manim installation
+if python3 -c "import manim" 2>/dev/null; then
+    MANIM_VERSION=$(python3 -c "import manim; print(manim.__version__)" 2>/dev/null)
+    echo -e "${GREEN}  ✓ Manim v${MANIM_VERSION} installed${NC}"
+else
+    echo -e "${RED}  ✗ Manim installation failed${NC}"
+    exit 1
+fi
+
+# Check if manim command is available, if not use python -m manim
+if command -v manim &> /dev/null; then
+    MANIM_CMD="manim"
+    echo -e "${GREEN}  ✓ Manim command available in PATH${NC}"
+else
+    MANIM_CMD="python3 -m manim"
+    echo -e "${YELLOW}  ! Using 'python3 -m manim' instead of 'manim' command${NC}"
+fi
+
 echo -e "${GREEN}✓ Python dependencies installed${NC}"
 echo ""
 
@@ -66,7 +134,48 @@ echo ""
 
 # Step 4: Render preview GIFs
 echo -e "${YELLOW}Step 4/5: Rendering preview GIFs...${NC}"
-echo -e "${BLUE}This may take 10-20 minutes depending on the number of scenes...${NC}"
+
+# Set PYTHONPATH to include the repository root so components module can be found
+export PYTHONPATH="$(pwd):${PYTHONPATH}"
+echo -e "${BLUE}PYTHONPATH set to: $(pwd)${NC}"
+echo ""
+
+# First, test if Manim can render at all with a simple test
+echo -e "${BLUE}Running Manim smoke test...${NC}"
+TEST_RESULT=$(python3 -c "
+import sys
+from manim import *
+
+try:
+    # Test 1: Basic text rendering
+    t = Text('Hello')
+    print('✓ Manim text rendering works')
+
+    # Test 2: Import components module
+    from components import HashMachine, DataBox
+    print('✓ Components module imports successfully')
+
+    print('SUCCESS: All smoke tests passed')
+except ImportError as e:
+    print(f'ERROR: Import failed - {str(e)}')
+    import traceback
+    traceback.print_exc()
+except Exception as e:
+    print(f'ERROR: {str(e)}')
+    import traceback
+    traceback.print_exc()
+" 2>&1)
+
+echo "$TEST_RESULT"
+if echo "$TEST_RESULT" | grep -q "SUCCESS"; then
+    echo -e "${GREEN}  ✓ Manim smoke test passed${NC}"
+elif echo "$TEST_RESULT" | grep -q "ERROR"; then
+    echo -e "${RED}  ✗ Manim cannot render - check error above${NC}"
+    echo -e "${YELLOW}  Continuing anyway to see specific scene errors...${NC}"
+fi
+echo ""
+
+echo -e "${BLUE}Rendering scenes (this may take 10-20 minutes)...${NC}"
 echo ""
 
 PHASE1_DIR="scenes/phase1"
@@ -79,56 +188,99 @@ render_module() {
     local output_name=$3
     local module_num=$4
 
-    echo -e "${BLUE}  [$module_num/14] Rendering: ${scene_name}${NC}"
+    echo -e "${BLUE}  [${module_num}] Rendering: ${scene_name}${NC}"
 
     # Render as GIF with low quality for fast preview
-    manim -ql --format=gif \
+    # Capture both stdout and stderr to a temp file for debugging
+    RENDER_LOG="/tmp/render_${module_num}.log"
+
+    if $MANIM_CMD -ql --format=gif \
         --output_file="${output_name}" \
         "${PHASE1_DIR}/${module_file}" \
-        "${scene_name}" 2>&1 | grep -i "file ready at" || true
+        "${scene_name}" > "$RENDER_LOG" 2>&1; then
 
-    # Find and move the generated GIF to the public directory
-    if find media -name "${output_name}" -type f -exec cp {} "${PREVIEW_DIR}/" \; 2>/dev/null; then
-        echo -e "${GREEN}    ✓ Created: ${output_name}${NC}"
+        # Rendering succeeded
+        if find media -name "${output_name}" -type f -exec cp {} "${PREVIEW_DIR}/" \; 2>/dev/null; then
+            echo -e "${GREEN}    ✓ Created: ${output_name}${NC}"
+            rm -f "$RENDER_LOG"
+            return 0
+        else
+            echo -e "${RED}    ✗ Render succeeded but GIF not found: ${output_name}${NC}"
+            echo -e "${YELLOW}    Last 10 lines of output:${NC}"
+            tail -10 "$RENDER_LOG" | sed 's/^/      /'
+            rm -f "$RENDER_LOG"
+            return 1
+        fi
     else
-        echo -e "${RED}    ✗ Failed to create: ${output_name}${NC}"
+        # Rendering failed
+        echo -e "${RED}    ✗ Failed to render: ${scene_name}${NC}"
+        echo -e "${YELLOW}    Error output (last 15 lines):${NC}"
+        tail -15 "$RENDER_LOG" | sed 's/^/      /'
+        rm -f "$RENDER_LOG"
+        return 1
     fi
 }
 
 # Define all modules and their key scenes for preview
 # Format: "file.py|SceneName|output.gif"
+# NOTE: Scenes 7-14 use MathTex which requires LaTeX. For now, only rendering scenes 1-6.
+# TODO: Install LaTeX or convert MathTex to Text for full rendering
 MODULES=(
     "01_hash_intro.py|HashIntroduction|01_hash_intro.gif|01"
     "02_sha256.py|SHA256Overview|02_sha256.gif|02"
     "03_ripemd160.py|Hash160Visualization|03_ripemd160.gif|03"
     "04_merkle_trees_intro.py|BuildingMerkleTree|04_merkle_tree.gif|04"
     "05_merkle_proofs.py|ProofExample|05_merkle_proof.gif|05"
-    "06_public_key_intro.py|PublicKeyIntro|06_public_key.gif|06"
-    "07_elliptic_curves_intro.py|EllipticCurveVisualization|07_elliptic_curve.gif|07"
-    "08_elliptic_curves_math.py|ScalarMultiplicationVisualization|08_ec_math.gif|08"
-    "09_ecdsa_signing.py|ECDSASigningVisualization|09_ecdsa_sign.gif|09"
-    "10_ecdsa_verification.py|ECDSAVerificationVisualization|10_ecdsa_verify.gif|10"
-    "11_schnorr_intro.py|SchnorrVsECDSA|11_schnorr.gif|11"
-    "12_schnorr_aggregation.py|MuSigProtocol|12_schnorr_agg.gif|12"
-    "13_signatures_practice.py|NonceReuseDemo|13_sig_practice.gif|13"
-    "14_encoding.py|Base58CheckProcess|14_encoding.gif|14"
+    "06_public_key_intro.py|PublicKeyIntroduction|06_public_key.gif|06"
+    # "07_elliptic_curves_intro.py|EllipticCurveIntroduction|07_elliptic_curve.gif|07"  # Requires LaTeX
+    # "08_elliptic_curves_math.py|VisualizingScalarMultiplication|08_ec_math.gif|08"  # Requires LaTeX
+    # "09_ecdsa_signing.py|SigningVisualization|09_ecdsa_sign.gif|09"  # Requires LaTeX
+    # "10_ecdsa_verification.py|VerificationVisualization|10_ecdsa_verify.gif|10"  # Requires LaTeX
+    # "11_schnorr_intro.py|ECDSAvsSchnorr|11_schnorr.gif|11"  # Requires LaTeX
+    # "12_schnorr_aggregation.py|MuSigProtocol|12_schnorr_agg.gif|12"  # Requires LaTeX
+    # "13_signatures_practice.py|NonceReuseDeepDive|13_sig_practice.gif|13"  # Requires LaTeX
+    # "14_encoding.py|Base58CheckEncoding|14_encoding.gif|14"  # Requires LaTeX
 )
 
 # Check if phase1 scenes exist, if not skip rendering
 if [ ! -d "$PHASE1_DIR" ]; then
-    echo -e "${YELLOW}Warning: $PHASE1_DIR not found. Skipping preview rendering.${NC}"
+    echo -e "${RED}✗ Warning: $PHASE1_DIR not found. Skipping preview rendering.${NC}"
+    echo -e "${YELLOW}  Current directory: $(pwd)${NC}"
+    echo -e "${YELLOW}  Directory listing:${NC}"
+    ls -la scenes/ 2>/dev/null || echo "  No scenes directory found"
 else
+    echo -e "${GREEN}✓ Found ${PHASE1_DIR} directory${NC}"
+    FILE_COUNT=$(ls -1 "${PHASE1_DIR}"/*.py 2>/dev/null | wc -l)
+    echo -e "${BLUE}  Found ${FILE_COUNT} Python files in ${PHASE1_DIR}${NC}"
+    echo ""
+
     # Render all modules
+    RENDERED=0
+    FAILED=0
+    SKIPPED=0
+
     for module_info in "${MODULES[@]}"; do
         IFS='|' read -r file scene output num <<< "$module_info"
 
         # Check if the file exists before trying to render
         if [ -f "${PHASE1_DIR}/${file}" ]; then
             render_module "$file" "$scene" "$output" "$num"
+            if [ $? -eq 0 ]; then
+                RENDERED=$((RENDERED + 1))
+            else
+                FAILED=$((FAILED + 1))
+            fi
         else
             echo -e "${YELLOW}  [$num/14] Skipping: ${file} (not found)${NC}"
+            SKIPPED=$((SKIPPED + 1))
         fi
     done
+
+    echo ""
+    echo -e "${BLUE}Rendering Summary:${NC}"
+    echo -e "  ${GREEN}Rendered: ${RENDERED}${NC}"
+    echo -e "  ${RED}Failed: ${FAILED}${NC}"
+    echo -e "  ${YELLOW}Skipped: ${SKIPPED}${NC}"
 fi
 
 echo ""

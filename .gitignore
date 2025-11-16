@@ -10,8 +10,9 @@ __pycache__/
 # Voiceover cache
 media/voiceover/
 
-# Netlify build outputs
-public/
+# Netlify build outputs (but keep placeholder index.html)
+public/*
+!public/index.html
 .netlify/
 
 # OS files

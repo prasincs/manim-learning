@@ -2,16 +2,14 @@
   # The directory that contains the deploy-ready HTML files and assets
   publish = "public"
 
-  # The build command to run
-  command = "bash scripts/netlify_build.sh"
+  # No build command - GitHub Actions handles the build and deployment
+  # The GIFs are rendered in Docker via GitHub Actions workflow
+  # This minimal command satisfies Netlify's requirement for a build command
+  command = "echo 'Site built via GitHub Actions'"
 
 [build.environment]
-  # Python version for Netlify build
-  PYTHON_VERSION = "3.11"
-
-  # Manim configuration
-  MANIM_QUALITY = "low_quality"
-  MANIM_FORMAT = "gif"
+  # Build is handled by GitHub Actions with Docker + LaTeX
+  # This file is kept for Netlify configuration (headers, redirects, etc.)
 
 [[headers]]
   # Cache the GIF files for faster loading
