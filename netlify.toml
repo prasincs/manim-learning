@@ -4,7 +4,8 @@
 
   # No build command - GitHub Actions handles the build and deployment
   # The GIFs are rendered in Docker via GitHub Actions workflow
-  command = "echo 'Deployed via GitHub Actions - no build needed'"
+  # This minimal command satisfies Netlify's requirement for a build command
+  command = "echo 'Site built via GitHub Actions'"
 
 [build.environment]
   # Build is handled by GitHub Actions with Docker + LaTeX
