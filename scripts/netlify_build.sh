@@ -107,6 +107,15 @@ else
     exit 1
 fi
 
+# Check if manim command is available, if not use python -m manim
+if command -v manim &> /dev/null; then
+    MANIM_CMD="manim"
+    echo -e "${GREEN}  ✓ Manim command available in PATH${NC}"
+else
+    MANIM_CMD="python3 -m manim"
+    echo -e "${YELLOW}  ! Using 'python3 -m manim' instead of 'manim' command${NC}"
+fi
+
 echo -e "${GREEN}✓ Python dependencies installed${NC}"
 echo ""
 
@@ -169,7 +178,7 @@ render_module() {
     # Capture both stdout and stderr to a temp file for debugging
     RENDER_LOG="/tmp/render_${module_num}.log"
 
-    if manim -ql --format=gif \
+    if $MANIM_CMD -ql --format=gif \
         --output_file="${output_name}" \
         "${PHASE1_DIR}/${module_file}" \
         "${scene_name}" > "$RENDER_LOG" 2>&1; then
@@ -177,20 +186,23 @@ render_module() {
         # Rendering succeeded
         if find media -name "${output_name}" -type f -exec cp {} "${PREVIEW_DIR}/" \; 2>/dev/null; then
             echo -e "${GREEN}    ✓ Created: ${output_name}${NC}"
+            rm -f "$RENDER_LOG"
+            return 0
         else
             echo -e "${RED}    ✗ Render succeeded but GIF not found: ${output_name}${NC}"
             echo -e "${YELLOW}    Last 10 lines of output:${NC}"
             tail -10 "$RENDER_LOG" | sed 's/^/      /'
+            rm -f "$RENDER_LOG"
+            return 1
         fi
     else
         # Rendering failed
         echo -e "${RED}    ✗ Failed to render: ${scene_name}${NC}"
         echo -e "${YELLOW}    Error output (last 15 lines):${NC}"
         tail -15 "$RENDER_LOG" | sed 's/^/      /'
+        rm -f "$RENDER_LOG"
+        return 1
     fi
-
-    # Clean up log file
-    rm -f "$RENDER_LOG"
 }
 
 # Define all modules and their key scenes for preview
@@ -214,19 +226,43 @@ MODULES=(
 
 # Check if phase1 scenes exist, if not skip rendering
 if [ ! -d "$PHASE1_DIR" ]; then
-    echo -e "${YELLOW}Warning: $PHASE1_DIR not found. Skipping preview rendering.${NC}"
+    echo -e "${RED}✗ Warning: $PHASE1_DIR not found. Skipping preview rendering.${NC}"
+    echo -e "${YELLOW}  Current directory: $(pwd)${NC}"
+    echo -e "${YELLOW}  Directory listing:${NC}"
+    ls -la scenes/ 2>/dev/null || echo "  No scenes directory found"
 else
+    echo -e "${GREEN}✓ Found ${PHASE1_DIR} directory${NC}"
+    FILE_COUNT=$(ls -1 "${PHASE1_DIR}"/*.py 2>/dev/null | wc -l)
+    echo -e "${BLUE}  Found ${FILE_COUNT} Python files in ${PHASE1_DIR}${NC}"
+    echo ""
+
     # Render all modules
+    RENDERED=0
+    FAILED=0
+    SKIPPED=0
+
     for module_info in "${MODULES[@]}"; do
         IFS='|' read -r file scene output num <<< "$module_info"
 
         # Check if the file exists before trying to render
         if [ -f "${PHASE1_DIR}/${file}" ]; then
             render_module "$file" "$scene" "$output" "$num"
+            if [ $? -eq 0 ]; then
+                ((RENDERED++))
+            else
+                ((FAILED++))
+            fi
         else
             echo -e "${YELLOW}  [$num/14] Skipping: ${file} (not found)${NC}"
+            ((SKIPPED++))
         fi
     done
+
+    echo ""
+    echo -e "${BLUE}Rendering Summary:${NC}"
+    echo -e "  ${GREEN}Rendered: ${RENDERED}${NC}"
+    echo -e "  ${RED}Failed: ${FAILED}${NC}"
+    echo -e "  ${YELLOW}Skipped: ${SKIPPED}${NC}"
 fi
 
 echo ""
