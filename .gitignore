@@ -1,3 +1,21 @@
 media
 __pycache__
 .env
+
+# Manim outputs
+media/
+__pycache__/
+*.pyc
+
+# Voiceover cache
+media/voiceover/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
