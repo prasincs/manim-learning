@@ -224,15 +224,15 @@ MODULES=(
     "03_ripemd160.py|Hash160Visualization|03_ripemd160.gif|03"
     "04_merkle_trees_intro.py|BuildingMerkleTree|04_merkle_tree.gif|04"
     "05_merkle_proofs.py|ProofExample|05_merkle_proof.gif|05"
-    "06_public_key_intro.py|PublicKeyIntro|06_public_key.gif|06"
-    "07_elliptic_curves_intro.py|EllipticCurveVisualization|07_elliptic_curve.gif|07"
-    "08_elliptic_curves_math.py|ScalarMultiplicationVisualization|08_ec_math.gif|08"
-    "09_ecdsa_signing.py|ECDSASigningVisualization|09_ecdsa_sign.gif|09"
-    "10_ecdsa_verification.py|ECDSAVerificationVisualization|10_ecdsa_verify.gif|10"
-    "11_schnorr_intro.py|SchnorrVsECDSA|11_schnorr.gif|11"
+    "06_public_key_intro.py|PublicKeyIntroduction|06_public_key.gif|06"
+    "07_elliptic_curves_intro.py|EllipticCurveIntroduction|07_elliptic_curve.gif|07"
+    "08_elliptic_curves_math.py|VisualizingScalarMultiplication|08_ec_math.gif|08"
+    "09_ecdsa_signing.py|SigningVisualization|09_ecdsa_sign.gif|09"
+    "10_ecdsa_verification.py|VerificationVisualization|10_ecdsa_verify.gif|10"
+    "11_schnorr_intro.py|ECDSAvsSchnorr|11_schnorr.gif|11"
     "12_schnorr_aggregation.py|MuSigProtocol|12_schnorr_agg.gif|12"
-    "13_signatures_practice.py|NonceReuseDemo|13_sig_practice.gif|13"
-    "14_encoding.py|Base58CheckProcess|14_encoding.gif|14"
+    "13_signatures_practice.py|NonceReuseDeepDive|13_sig_practice.gif|13"
+    "14_encoding.py|Base58CheckEncoding|14_encoding.gif|14"
 )
 
 # Check if phase1 scenes exist, if not skip rendering
