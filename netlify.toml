@@ -1,0 +1,45 @@
+[build]
+  # The directory that contains the deploy-ready HTML files and assets
+  publish = "public"
+
+  # The build command to run
+  command = "bash scripts/netlify_build.sh"
+
+[build.environment]
+  # Python version for Netlify build
+  PYTHON_VERSION = "3.11"
+
+  # Manim configuration
+  MANIM_QUALITY = "low_quality"
+  MANIM_FORMAT = "gif"
+
+[[headers]]
+  # Cache the GIF files for faster loading
+  for = "/*.gif"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
+[[headers]]
+  # Cache CSS and JS files
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[redirects]]
+  # Redirect root to index.html
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# Build plugin to check file sizes
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+
+  # Lighthouse plugin configuration (optional)
+  [plugins.inputs]
+    output_path = "reports/lighthouse.html"

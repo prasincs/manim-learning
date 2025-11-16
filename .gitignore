@@ -10,6 +10,10 @@ __pycache__/
 # Voiceover cache
 media/voiceover/
 
+# Netlify build outputs
+public/
+.netlify/
+
 # OS files
 .DS_Store
 Thumbs.db
