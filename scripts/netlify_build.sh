@@ -16,43 +16,81 @@ echo -e "${BLUE}Manim Learning - Netlify Build${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Step 1: Install system dependencies
+# Step 1: Install system dependencies (user space - no root required)
 echo -e "${YELLOW}Step 1/5: Installing system dependencies...${NC}"
 
-# Update package lists
-apt-get update -qq
+# Create local bin directory for user-space binaries
+mkdir -p $HOME/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
 
-# Install LaTeX (required by Manim for text rendering)
-echo -e "${BLUE}Installing LaTeX...${NC}"
-apt-get install -y -qq \
-    texlive \
-    texlive-latex-extra \
-    texlive-fonts-extra \
-    texlive-latex-recommended \
-    texlive-science \
-    texlive-fonts-recommended \
-    cm-super \
-    dvipng
+# Check if FFmpeg is already available (from Netlify's build image)
+echo -e "${BLUE}Checking for FFmpeg...${NC}"
+if command -v ffmpeg &> /dev/null; then
+    echo -e "${GREEN}  ✓ FFmpeg found: $(ffmpeg -version | head -n1)${NC}"
+else
+    echo -e "${YELLOW}  FFmpeg not found, installing from static build...${NC}"
 
-# Install FFmpeg (required for video/GIF generation)
-echo -e "${BLUE}Installing FFmpeg...${NC}"
-apt-get install -y -qq ffmpeg
+    # Download FFmpeg static build (no root required)
+    cd /tmp
+    wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+    tar xf ffmpeg-release-amd64-static.tar.xz
 
-# Install other dependencies
-echo -e "${BLUE}Installing other dependencies...${NC}"
-apt-get install -y -qq \
-    libcairo2-dev \
-    libpango1.0-dev \
-    pkg-config \
-    python3-dev
+    # Copy to local bin
+    find . -name "ffmpeg" -type f -executable -exec cp {} $HOME/.local/bin/ \;
+    find . -name "ffprobe" -type f -executable -exec cp {} $HOME/.local/bin/ \;
 
-echo -e "${GREEN}✓ System dependencies installed${NC}"
+    # Verify installation
+    if command -v ffmpeg &> /dev/null; then
+        echo -e "${GREEN}  ✓ FFmpeg installed successfully${NC}"
+    else
+        echo -e "${RED}  ✗ FFmpeg installation failed${NC}"
+        exit 1
+    fi
+
+    # Clean up
+    cd -
+    rm -rf /tmp/ffmpeg-*
+fi
+
+echo -e "${BLUE}Checking Python...${NC}"
+if command -v python3 &> /dev/null; then
+    echo -e "${GREEN}  ✓ Python found: $(python3 --version)${NC}"
+else
+    echo -e "${RED}  ✗ Python not found${NC}"
+    exit 1
+fi
+
+# Note: LaTeX is skipped for preview builds (not required for simple text)
+# Manim can use simpler text rendering without LaTeX
+echo -e "${YELLOW}  Note: LaTeX disabled for preview builds (using simple text rendering)${NC}"
+
+echo -e "${GREEN}✓ System dependencies ready${NC}"
 echo ""
 
 # Step 2: Install Python dependencies
 echo -e "${YELLOW}Step 2/5: Installing Python dependencies...${NC}"
-pip install --upgrade pip
-pip install -r requirements.txt
+
+# Upgrade pip first
+pip install --upgrade pip --quiet
+
+# Install dependencies from requirements.txt
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt --quiet
+    echo -e "${GREEN}  ✓ Requirements installed${NC}"
+else
+    echo -e "${RED}  ✗ requirements.txt not found${NC}"
+    exit 1
+fi
+
+# Verify Manim installation
+if python3 -c "import manim" 2>/dev/null; then
+    MANIM_VERSION=$(python3 -c "import manim; print(manim.__version__)" 2>/dev/null)
+    echo -e "${GREEN}  ✓ Manim v${MANIM_VERSION} installed${NC}"
+else
+    echo -e "${RED}  ✗ Manim installation failed${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}✓ Python dependencies installed${NC}"
 echo ""
 

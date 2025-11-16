@@ -6,12 +6,18 @@
   command = "bash scripts/netlify_build.sh"
 
 [build.environment]
-  # Python version for Netlify build
+  # Use conda for dependency management (allows installing system packages without root)
   PYTHON_VERSION = "3.11"
+
+  # Use conda instead of pip for better dependency management
+  CONDA_ENABLED = "true"
 
   # Manim configuration
   MANIM_QUALITY = "low_quality"
   MANIM_FORMAT = "gif"
+
+  # Increase build timeout for rendering
+  NODE_VERSION = "18"
 
 [[headers]]
   # Cache the GIF files for faster loading
