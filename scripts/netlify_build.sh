@@ -60,6 +60,22 @@ else
     exit 1
 fi
 
+# Check for Cairo library (required for rendering)
+echo -e "${BLUE}Checking for Cairo library...${NC}"
+if ldconfig -p | grep -q libcairo; then
+    echo -e "${GREEN}  ✓ Cairo library found${NC}"
+else
+    echo -e "${YELLOW}  ! Cairo library not found in ldconfig, but may still be available${NC}"
+fi
+
+# Check for Pango library (required for text rendering)
+echo -e "${BLUE}Checking for Pango library...${NC}"
+if ldconfig -p | grep -q libpango; then
+    echo -e "${GREEN}  ✓ Pango library found${NC}"
+else
+    echo -e "${YELLOW}  ! Pango library not found in ldconfig, but may still be available${NC}"
+fi
+
 # Note: LaTeX is skipped for preview builds (not required for simple text)
 # Manim can use simpler text rendering without LaTeX
 echo -e "${YELLOW}  Note: LaTeX disabled for preview builds (using simple text rendering)${NC}"
@@ -104,7 +120,37 @@ echo ""
 
 # Step 4: Render preview GIFs
 echo -e "${YELLOW}Step 4/5: Rendering preview GIFs...${NC}"
-echo -e "${BLUE}This may take 10-20 minutes depending on the number of scenes...${NC}"
+
+# First, test if Manim can render at all with a simple test
+echo -e "${BLUE}Running Manim smoke test...${NC}"
+TEST_RESULT=$(python3 -c "
+from manim import *
+import tempfile
+import os
+
+class TestScene(Scene):
+    def construct(self):
+        text = Text('Test')
+        self.add(text)
+
+try:
+    # Try to import and create a basic mobject
+    t = Text('Hello')
+    print('SUCCESS: Manim text rendering works')
+except Exception as e:
+    print(f'ERROR: {str(e)}')
+" 2>&1)
+
+echo "$TEST_RESULT"
+if echo "$TEST_RESULT" | grep -q "SUCCESS"; then
+    echo -e "${GREEN}  ✓ Manim smoke test passed${NC}"
+elif echo "$TEST_RESULT" | grep -q "ERROR"; then
+    echo -e "${RED}  ✗ Manim cannot render - check error above${NC}"
+    echo -e "${YELLOW}  Continuing anyway to see specific scene errors...${NC}"
+fi
+echo ""
+
+echo -e "${BLUE}Rendering scenes (this may take 10-20 minutes)...${NC}"
 echo ""
 
 PHASE1_DIR="scenes/phase1"
@@ -120,17 +166,31 @@ render_module() {
     echo -e "${BLUE}  [$module_num/14] Rendering: ${scene_name}${NC}"
 
     # Render as GIF with low quality for fast preview
-    manim -ql --format=gif \
+    # Capture both stdout and stderr to a temp file for debugging
+    RENDER_LOG="/tmp/render_${module_num}.log"
+
+    if manim -ql --format=gif \
         --output_file="${output_name}" \
         "${PHASE1_DIR}/${module_file}" \
-        "${scene_name}" 2>&1 | grep -i "file ready at" || true
+        "${scene_name}" > "$RENDER_LOG" 2>&1; then
 
-    # Find and move the generated GIF to the public directory
-    if find media -name "${output_name}" -type f -exec cp {} "${PREVIEW_DIR}/" \; 2>/dev/null; then
-        echo -e "${GREEN}    ✓ Created: ${output_name}${NC}"
+        # Rendering succeeded
+        if find media -name "${output_name}" -type f -exec cp {} "${PREVIEW_DIR}/" \; 2>/dev/null; then
+            echo -e "${GREEN}    ✓ Created: ${output_name}${NC}"
+        else
+            echo -e "${RED}    ✗ Render succeeded but GIF not found: ${output_name}${NC}"
+            echo -e "${YELLOW}    Last 10 lines of output:${NC}"
+            tail -10 "$RENDER_LOG" | sed 's/^/      /'
+        fi
     else
-        echo -e "${RED}    ✗ Failed to create: ${output_name}${NC}"
+        # Rendering failed
+        echo -e "${RED}    ✗ Failed to render: ${scene_name}${NC}"
+        echo -e "${YELLOW}    Error output (last 15 lines):${NC}"
+        tail -15 "$RENDER_LOG" | sed 's/^/      /'
     fi
+
+    # Clean up log file
+    rm -f "$RENDER_LOG"
 }
 
 # Define all modules and their key scenes for preview
