@@ -259,13 +259,13 @@ else
         if [ -f "${PHASE1_DIR}/${file}" ]; then
             render_module "$file" "$scene" "$output" "$num"
             if [ $? -eq 0 ]; then
-                ((RENDERED++))
+                RENDERED=$((RENDERED + 1))
             else
-                ((FAILED++))
+                FAILED=$((FAILED + 1))
             fi
         else
             echo -e "${YELLOW}  [$num/14] Skipping: ${file} (not found)${NC}"
-            ((SKIPPED++))
+            SKIPPED=$((SKIPPED + 1))
         fi
     done
 
