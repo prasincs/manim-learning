@@ -2,22 +2,13 @@
   # The directory that contains the deploy-ready HTML files and assets
   publish = "public"
 
-  # The build command to run
-  command = "bash scripts/netlify_build.sh"
+  # No build command - GitHub Actions handles the build and deployment
+  # The GIFs are rendered in Docker via GitHub Actions workflow
+  command = "echo 'Deployed via GitHub Actions - no build needed'"
 
 [build.environment]
-  # Use conda for dependency management (allows installing system packages without root)
-  PYTHON_VERSION = "3.11"
-
-  # Use conda instead of pip for better dependency management
-  CONDA_ENABLED = "true"
-
-  # Manim configuration
-  MANIM_QUALITY = "low_quality"
-  MANIM_FORMAT = "gif"
-
-  # Increase build timeout for rendering
-  NODE_VERSION = "18"
+  # Build is handled by GitHub Actions with Docker + LaTeX
+  # This file is kept for Netlify configuration (headers, redirects, etc.)
 
 [[headers]]
   # Cache the GIF files for faster loading

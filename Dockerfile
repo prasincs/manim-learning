@@ -46,6 +46,39 @@ COPY . .
 # Set environment variables for Manim
 ENV MANIM_QUALITY=low_quality
 ENV MANIM_FORMAT=gif
+ENV PYTHONPATH=/opt/build/repo
 
-# Default command (will be overridden by Netlify)
-CMD ["bash", "scripts/netlify_build.sh"]
+# Create a simplified build script for Docker that only renders GIFs
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting GIF rendering in Docker..."\n\
+echo ""\n\
+\n\
+# Create output directories\n\
+mkdir -p public/previews/phase1\n\
+mkdir -p public/previews/phase2\n\
+mkdir -p media\n\
+\n\
+# Copy static files\n\
+if [ -f "public_template/index.html" ]; then\n\
+    cp public_template/index.html public/\n\
+fi\n\
+\n\
+if [ -d "public_template/css" ]; then\n\
+    cp -r public_template/css public/\n\
+fi\n\
+\n\
+if [ -d "public_template/js" ]; then\n\
+    cp -r public_template/js public/\n\
+fi\n\
+\n\
+# Run the rendering\n\
+bash scripts/render_all.sh\n\
+\n\
+echo ""\n\
+echo "Build complete!"\n\
+' > /opt/build/repo/docker-build.sh && chmod +x /opt/build/repo/docker-build.sh
+
+# Default command - run the build
+CMD ["bash", "/opt/build/repo/docker-build.sh"]
