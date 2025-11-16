@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive blockchain and cryptography learning through animated visualizations using Manim">
+    <title>Blockchain & Cryptography Learning - Manim Animations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: #b0b0b0;
+            margin-bottom: 30px;
+        }
+
+        .header-description {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #d0d0d0;
+        }
+
+        .nav-tabs {
+            background: #f5f5f5;
+            padding: 20px 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .phase-section {
+            display: none;
+        }
+
+        .phase-section.active {
+            display: block;
+        }
+
+        .phase-intro {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            border-left: 4px solid #667eea;
+        }
+
+        .phase-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #1e1e1e;
+        }
+
+        .phase-intro p {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .preview-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .preview-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: #1e1e1e;
+            display: block;
+        }
+
+        .preview-info {
+            padding: 20px;
+        }
+
+        .preview-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .preview-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e1e1e;
+        }
+
+        .preview-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .preview-topics {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .preview-topics-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .topic-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #555;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 4px 4px 4px 0;
+        }
+
+        footer {
+            background: #1e1e1e;
+            color: #b0b0b0;
+            padding: 40px;
+            text-align: center;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .build-info {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 40px 20px;
+            }
+
+            main {
+                padding: 20px;
+            }
+
+            .nav-tabs {
+                padding: 15px 20px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .no-previews {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .no-previews h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Blockchain & Cryptography Learning</h1>
+            <p class="subtitle">Interactive Animated Visualizations with Manim</p>
+            <div class="header-description">
+                <p>
+                    Learn blockchain fundamentals and cryptography through beautiful,
+                    educational animations created with Manim. Each visualization follows
+                    Edward Tufte's principles of clear, effective information design.
+                </p>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-button active" onclick="showPhase('phase1')">
+                Phase 1: Cryptography Fundamentals
+            </button>
+            <button class="tab-button" onclick="showPhase('phase2')">
+                Phase 2: Bitcoin Transactions
+            </button>
+        </div>
+
+        <main>
+            <!-- Phase 1: Cryptography Fundamentals -->
+            <section id="phase1" class="phase-section active">
+                <div class="phase-intro">
+                    <h2>Phase 1: Cryptography Fundamentals</h2>
+                    <p>
+                        Master the cryptographic building blocks of blockchain technology.
+                        From hash functions to digital signatures, these animations visualize
+                        the mathematical concepts that secure cryptocurrencies.
+                    </p>
+                </div>
+
+                <div class="gallery" id="phase1-gallery">
+                    <!-- Phase 1 previews will be loaded here -->
+                    <div class="loading">Loading Phase 1 previews...</div>
+                </div>
+            </section>
+
+            <!-- Phase 2: Bitcoin Transactions -->
+            <section id="phase2" class="phase-section">
+                <div class="phase-intro">
+                    <h2>Phase 2: Bitcoin Transactions</h2>
+                    <p>
+                        Dive deep into how Bitcoin transactions work, from simple payments
+                        to advanced Script operations and covenant constructions.
+                    </p>
+                </div>
+
+                <div class="gallery" id="phase2-gallery">
+                    <!-- Phase 2 previews will be loaded here -->
+                    <div class="no-previews">
+                        <h3>Coming Soon</h3>
+                        <p>Phase 2 animations are currently in development.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>
+                <strong>About this Project</strong><br>
+                These animations are created with <a href="https://www.manim.community/" target="_blank">Manim Community</a>,
+                following <a href="https://www.edwardtufte.com/tufte/" target="_blank">Edward Tufte's</a>
+                principles of data visualization.
+            </p>
+            <div class="build-info">
+                <p>
+                    🚀 Automatically built and deployed with Netlify<br>
+                    📖 <a href="https://github.com/prasincs/manim-learning" target="_blank">View on GitHub</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Phase 1 preview data
+        const phase1Previews = [
+            {
+                number: "01",
+                title: "Hash Functions Basics",
+                file: "01_hash_intro.gif",
+                description: "Introduction to hash functions and their fundamental properties in cryptography.",
+                topics: ["Deterministic", "One-way", "Collision Resistance", "Avalanche Effect"]
+            },
+            {
+                number: "02",
+                title: "SHA-256 Deep Dive",
+                file: "02_sha256.gif",
+                description: "Detailed walkthrough of the SHA-256 hashing algorithm used in Bitcoin.",
+                topics: ["Message Padding", "Compression Function", "64 Rounds", "Hash Output"]
+            },
+            {
+                number: "03",
+                title: "RIPEMD-160",
+                file: "03_ripemd160.gif",
+                description: "Understanding Hash160 and its role in Bitcoin address generation.",
+                topics: ["RIPEMD-160", "Hash160", "Double Hashing", "Address Generation"]
+            },
+            {
+                number: "04",
+                title: "Merkle Trees Part 1",
+                file: "04_merkle_tree.gif",
+                description: "Building Merkle trees from transactions and understanding their structure.",
+                topics: ["Tree Structure", "Root Hash", "Bottom-up Construction", "Tamper Evidence"]
+            },
+            {
+                number: "05",
+                title: "Merkle Trees Part 2",
+                file: "05_merkle_proof.gif",
+                description: "Merkle proofs for efficient transaction verification in SPV wallets.",
+                topics: ["Merkle Proof", "Verification", "SPV Wallets", "Logarithmic Efficiency"]
+            },
+            {
+                number: "06",
+                title: "Public Key Cryptography",
+                file: "06_public_key.gif",
+                description: "Introduction to asymmetric encryption and key pairs.",
+                topics: ["Key Pairs", "Asymmetric Encryption", "Public vs Private", "Lock & Key Metaphor"]
+            },
+            {
+                number: "07",
+                title: "Elliptic Curves Basics",
+                file: "07_elliptic_curve.gif",
+                description: "Visual exploration of elliptic curves and point addition.",
+                topics: ["Curve Equation", "Point Addition", "Point Doubling", "Geometric Properties"]
+            },
+            {
+                number: "08",
+                title: "Elliptic Curves Math",
+                file: "08_ec_math.gif",
+                description: "Scalar multiplication and the discrete logarithm problem.",
+                topics: ["Scalar Multiplication", "Generator Point", "Discrete Log Problem", "Public Key Derivation"]
+            },
+            {
+                number: "09",
+                title: "ECDSA Signing",
+                file: "09_ecdsa_sign.gif",
+                description: "Step-by-step ECDSA signature creation process.",
+                topics: ["Signing Algorithm", "Nonce Generation", "r and s Values", "RFC 6979"]
+            },
+            {
+                number: "10",
+                title: "ECDSA Verification",
+                file: "10_ecdsa_verify.gif",
+                description: "How ECDSA signature verification works mathematically.",
+                topics: ["Verification Algorithm", "Mathematical Proof", "Invalid Detection", "Security Properties"]
+            },
+            {
+                number: "11",
+                title: "Schnorr Signatures",
+                file: "11_schnorr.gif",
+                description: "Comparing Schnorr signatures with ECDSA and their advantages.",
+                topics: ["Schnorr vs ECDSA", "Linearity", "Simplicity", "Signature Size"]
+            },
+            {
+                number: "12",
+                title: "Schnorr Aggregation",
+                file: "12_schnorr_agg.gif",
+                description: "MuSig protocol for signature and key aggregation.",
+                topics: ["Signature Aggregation", "Key Aggregation", "Multi-signature", "Batch Verification"]
+            },
+            {
+                number: "13",
+                title: "Signatures in Practice",
+                file: "13_sig_practice.gif",
+                description: "Common pitfalls and the infamous nonce reuse vulnerability.",
+                topics: ["Nonce Reuse", "PlayStation 3 Hack", "Best Practices", "Security Pitfalls"]
+            },
+            {
+                number: "14",
+                title: "Base58 & Bech32",
+                file: "14_encoding.gif",
+                description: "Bitcoin address encoding formats explained.",
+                topics: ["Base58", "Checksum", "Bech32", "QR Codes"]
+            }
+        ];
+
+        function showPhase(phaseId) {
+            // Hide all phases
+            document.querySelectorAll('.phase-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected phase
+            document.getElementById(phaseId).classList.add('active');
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function loadPhase1Previews() {
+            const gallery = document.getElementById('phase1-gallery');
+            gallery.innerHTML = '';
+
+            phase1Previews.forEach(preview => {
+                const card = document.createElement('div');
+                card.className = 'preview-card';
+
+                const imagePath = `previews/phase1/${preview.file}`;
+
+                card.innerHTML = `
+                    <img src="${imagePath}"
+                         alt="${preview.title}"
+                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%231e1e1e%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23888%22 font-family=%22Arial%22 font-size=%2216%22%3EPreview rendering...%3C/text%3E%3C/svg%3E';">
+                    <div class="preview-info">
+                        <span class="preview-number">Module ${preview.number}</span>
+                        <h3 class="preview-title">${preview.title}</h3>
+                        <p class="preview-description">${preview.description}</p>
+                        <div class="preview-topics">
+                            <div class="preview-topics-title">Topics Covered:</div>
+                            ${preview.topics.map(topic => `<span class="topic-tag">${topic}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                gallery.appendChild(card);
+            });
+        }
+
+        // Load previews on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPhase1Previews();
+        });
+    </script>
+</body>
+</html>
