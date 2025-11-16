@@ -1,0 +1,17 @@
+# Manim Learning Project Requirements
+# Install with: pip install -r requirements.txt
+
+# Core animation library
+manim>=0.18.0
+
+# For voiceover integration (optional)
+# manim-voiceover[azure]>=0.3.0
+
+# Additional helpful libraries
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Development tools (optional)
+black>=23.0.0
+flake8>=6.0.0
+pytest>=7.4.0

@@ -14,6 +14,7 @@ Following Tufte's principles:
 from components.stack import StackElement, Stack, AnimatedStack
 from components.hash import HashMachine, DataBox, HashVisualization, AvalancheEffect
 from components.tree import HashNode, MerkleTree, MerkleProofVisualization, BinaryTreeGeneric
+from components.signature import KeyPair, SignatureProcess, VerificationProcess, EllipticCurve, PointAddition
 
 __all__ = [
     # Stack components
@@ -32,6 +33,13 @@ __all__ = [
     'MerkleTree',
     'MerkleProofVisualization',
     'BinaryTreeGeneric',
+
+    # Signature components
+    'KeyPair',
+    'SignatureProcess',
+    'VerificationProcess',
+    'EllipticCurve',
+    'PointAddition',
 ]
 
 __version__ = '0.1.0'
