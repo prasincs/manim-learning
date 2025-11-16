@@ -7,7 +7,9 @@ Duration: 5-10 minutes
 from manim import *
 import hashlib
 import sys
-sys.path.append('/home/user/manim-learning')
+# Add repository root to path for components module
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from components import KeyPair, SignatureProcess, VerificationProcess
 
 # Configure background

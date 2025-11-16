@@ -130,24 +130,35 @@ echo ""
 # Step 4: Render preview GIFs
 echo -e "${YELLOW}Step 4/5: Rendering preview GIFs...${NC}"
 
+# Set PYTHONPATH to include the repository root so components module can be found
+export PYTHONPATH="$(pwd):${PYTHONPATH}"
+echo -e "${BLUE}PYTHONPATH set to: $(pwd)${NC}"
+echo ""
+
 # First, test if Manim can render at all with a simple test
 echo -e "${BLUE}Running Manim smoke test...${NC}"
 TEST_RESULT=$(python3 -c "
+import sys
 from manim import *
-import tempfile
-import os
-
-class TestScene(Scene):
-    def construct(self):
-        text = Text('Test')
-        self.add(text)
 
 try:
-    # Try to import and create a basic mobject
+    # Test 1: Basic text rendering
     t = Text('Hello')
-    print('SUCCESS: Manim text rendering works')
+    print('✓ Manim text rendering works')
+
+    # Test 2: Import components module
+    from components import HashMachine, DataBox
+    print('✓ Components module imports successfully')
+
+    print('SUCCESS: All smoke tests passed')
+except ImportError as e:
+    print(f'ERROR: Import failed - {str(e)}')
+    import traceback
+    traceback.print_exc()
 except Exception as e:
     print(f'ERROR: {str(e)}')
+    import traceback
+    traceback.print_exc()
 " 2>&1)
 
 echo "$TEST_RESULT"
